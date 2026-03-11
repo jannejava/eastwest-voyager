@@ -120,14 +120,7 @@ Route::group(['as' => 'voyager.'], function () {
         // Database Routes
         Route::resource('database', $namespacePrefix.'VoyagerDatabaseController');
 
-        // Compass Routes
-        Route::group([
-            'as'     => 'compass.',
-            'prefix' => 'compass',
-        ], function () use ($namespacePrefix) {
-            Route::get('/', ['uses' => $namespacePrefix.'VoyagerCompassController@index',  'as' => 'index']);
-            Route::post('/', ['uses' => $namespacePrefix.'VoyagerCompassController@index',  'as' => 'post']);
-        });
+        // Compass Routes - REMOVED FOR SECURITY (CVE-2025-32931, CVE-2024-55415, CVE-2024-55416)
 
         event(new RoutingAdminAfter());
     });

@@ -1,21 +1,20 @@
 {
-  "name": "tcg/voyager",
-  "description": "A Laravel Admin Package for The Control Group to make your life easier and steer your project in the right direction",
+  "name": "eastwest/voyager",
+  "description": "Security-patched fork of Voyager admin panel (Compass removed, upload hardened)",
   "keywords": [
     "laravel",
     "admin",
     "panel"
   ],
   "license": "MIT",
-  "homepage": "https://voyager.devdojo.com/",
-  "support": {
-    "issues": "https://github.com/the-control-group/voyager/issues",
-    "source": "https://github.com/the-control-group/voyager"
-  },
   "authors": [
     {
       "name": "Tony Lea",
       "email": "tony.lea@thecontrolgroup.com"
+    },
+    {
+      "name": "Eastwest",
+      "email": "janne@eastwest.se"
     }
   ],
   "require": {

@@ -227,6 +227,20 @@ class VoyagerMediaController extends Controller
         $this->authorize('browse_media');
 
         $extension = $request->file->getClientOriginalExtension();
+
+        // SECURITY FIX (CVE-2024-55417): Block dangerous file extensions
+        $dangerousExtensions = [
+            'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phar',
+            'htaccess', 'htpasswd', 'sh', 'bash', 'exe', 'bat', 'cmd', 'cgi', 'pl', 'asp', 'aspx', 'jsp'
+        ];
+        if (in_array(strtolower($extension), $dangerousExtensions)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('voyager::generic.extension_not_allowed'),
+                'path'    => '',
+            ]);
+        }
+
         $name = Str::replaceLast('.'.$extension, '', $request->file->getClientOriginalName());
         $details = json_decode($request->get('details') ?? '{}');
         $absolute_path = Storage::disk($this->filesystem)->path($request->upload_path);
