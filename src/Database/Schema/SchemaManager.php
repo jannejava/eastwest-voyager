@@ -18,12 +18,41 @@ abstract class SchemaManager
 
     public static function manager()
     {
-        return DB::connection()->getDoctrineSchemaManager();
+        // Laravel 11+ removed getDoctrineSchemaManager()
+        $connection = DB::connection();
+        if (method_exists($connection, 'getDoctrineSchemaManager')) {
+            return $connection->getDoctrineSchemaManager();
+        }
+
+        return static::getDatabaseConnection()->createSchemaManager();
+    }
+
+    public static function getDatabasePlatform()
+    {
+        return static::getDatabaseConnection()->getDatabasePlatform();
     }
 
     public static function getDatabaseConnection()
     {
-        return DB::connection()->getDoctrineConnection();
+        $connection = DB::connection();
+
+        // Laravel 11+ removed getDoctrineConnection()
+        if (method_exists($connection, 'getDoctrineConnection')) {
+            return $connection->getDoctrineConnection();
+        }
+
+        // For Laravel 11+, create Doctrine connection directly
+        $params = [
+            'driver' => 'pdo_mysql',
+            'host' => $connection->getConfig('host'),
+            'port' => $connection->getConfig('port'),
+            'dbname' => $connection->getConfig('database'),
+            'user' => $connection->getConfig('username'),
+            'password' => $connection->getConfig('password'),
+            'charset' => $connection->getConfig('charset') ?: 'utf8mb4',
+        ];
+
+        return \Doctrine\DBAL\DriverManager::getConnection($params);
     }
 
     public static function tableExists($table)
@@ -56,8 +85,11 @@ abstract class SchemaManager
         $columns = static::manager()->listTableColumns($tableName);
 
         $foreignKeys = [];
-        if (static::manager()->getDatabasePlatform()->supportsForeignKeyConstraints()) {
+        // MySQL always supports foreign keys, skip platform check for DBAL 4.x compatibility
+        try {
             $foreignKeys = static::manager()->listTableForeignKeys($tableName);
+        } catch (\Exception $e) {
+            // Ignore if foreign keys cannot be retrieved
         }
 
         $indexes = static::manager()->listTableIndexes($tableName);

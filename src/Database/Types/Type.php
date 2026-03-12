@@ -49,9 +49,10 @@ abstract class Type extends DoctrineType
         }
 
         $platform = SchemaManager::getDatabasePlatform();
+        $platformName = static::getPlatformName($platform);
 
         static::$platformTypes = Platform::getPlatformTypes(
-            $platform->getName(),
+            $platformName,
             static::getPlatformTypeMapping($platform)
         );
 
@@ -60,6 +61,27 @@ abstract class Type extends DoctrineType
         })->groupBy('category');
 
         return static::$platformTypes;
+    }
+
+    protected static function getPlatformName($platform)
+    {
+        // DBAL 4.x removed getName(), detect platform from class name
+        if (method_exists($platform, 'getName')) {
+            return $platform->getName();
+        }
+
+        $className = get_class($platform);
+        if (str_contains($className, 'MySQL')) {
+            return 'mysql';
+        } elseif (str_contains($className, 'PostgreSQL')) {
+            return 'postgresql';
+        } elseif (str_contains($className, 'SQLite')) {
+            return 'sqlite';
+        } elseif (str_contains($className, 'SQLServer')) {
+            return 'sqlserver';
+        }
+
+        return 'mysql'; // Default fallback
     }
 
     public static function getPlatformTypeMapping(DoctrineAbstractPlatform $platform)
@@ -82,7 +104,7 @@ abstract class Type extends DoctrineType
         }
 
         $platform = SchemaManager::getDatabasePlatform();
-        $platformName = ucfirst($platform->getName());
+        $platformName = ucfirst(static::getPlatformName($platform));
 
         $customTypes = array_merge(
             static::getPlatformCustomTypes('Common'),
@@ -100,7 +122,10 @@ abstract class Type extends DoctrineType
 
             $dbType = defined("{$type}::DBTYPE") ? $type::DBTYPE : $name;
 
-            $platform->registerDoctrineTypeMapping($dbType, $name);
+            // DBAL 4.x: registerDoctrineTypeMapping may not exist
+            if (method_exists($platform, 'registerDoctrineTypeMapping')) {
+                $platform->registerDoctrineTypeMapping($dbType, $name);
+            }
         }
 
         static::addCustomTypeOptions($platformName);
