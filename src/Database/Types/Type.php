@@ -34,8 +34,19 @@ abstract class Type extends DoctrineType
         $customTypeOptions = $type->customOptions ?? [];
 
         return array_merge([
-            'name' => $type->getName(),
+            'name' => static::getTypeName($type),
         ], $customTypeOptions);
+    }
+
+    protected static function getTypeName(DoctrineType $type)
+    {
+        // Voyager custom types keep getName(); DBAL 4.x built-in types
+        // (e.g. IntegerType) removed it, so fall back to the type registry.
+        if (method_exists($type, 'getName')) {
+            return $type->getName();
+        }
+
+        return DoctrineType::getTypeRegistry()->lookupName($type);
     }
 
     public static function getPlatformTypes()
